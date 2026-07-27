@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Fuentes · {{ site_name }}{% endblock %}
+
+{% block edicion %}Redacción{% endblock %}
+
+{% block secciones %}
+<nav class="sections"><a href="/">‹ Volver a la portada</a></nav>
+{% endblock %}
+
+{% block content %}
+{% if request.query_params.get('error') == 'nofeed' %}
+  <div class="aviso">No encontré un feed usable en eso.</div>
+{% endif %}
+{% if request.query_params.get('ok') %}
+  <div class="aviso ok">Fuente agregada.</div>
+{% endif %}
+
+<div class="section-head"><h2>Agregar fuente</h2></div>
+<form method="post" action="/feeds/add"
+      style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
+  <input type="text" name="target" required style="flex:1;min-width:16rem"
+         placeholder="astralcodexten, sitio.com o URL del feed"/>
+  <input type="text" name="lang" style="width:8rem" placeholder="idioma (es)"/>
+  <button type="submit" class="primary">Agregar</button>
+</form>
+<p class="byline" style="margin-top:.7rem;text-transform:none;letter-spacing:0;font-size:.85rem">
+  Acepta un handle de Substack, un dominio propio o la URL directa del feed.
+  Se valida antes de guardar. El idioma es opcional: si lo indicas, se busca la
+  traducción de cada artículo y se usa su título y su texto.
+</p>
+
+<div class="section-head"><h2>Fuentes</h2><span class="count">{{ feeds | length }}</span></div>
+{% if feeds %}
+<table class="fuentes">
+  <tr><th>Publicación</th><th>Última lectura</th><th></th></tr>
+  {% for f in feeds %}
+  <tr>
+    <td>
+      <strong style="font-size:1.05rem">{{ f.title or '(sin título)' }}</strong>
+      {% if f.lang %}<span class="marca">{{ f.lang }}</span>{% endif %}
+      <div class="byline" style="text-transform:none;letter-spacing:0">{{ f.url }}</div>
+      {% if f.last_error %}
+        <div class="byline" style="text-transform:none;letter-spacing:0;color:var(--accent)">
+          {{ f.last_error }}
+        </div>
+      {% endif %}
+    </td>
+    <td class="byline" style="text-transform:none;letter-spacing:0">
+      {{ f.last_fetch_at.strftime('%d.%m.%Y %H:%M') if f.last_fetch_at else 'nunca' }}
+    </td>
+    <td>
+      <form method="post" action="/feeds/{{ f.id }}/delete"
+            onsubmit="return confirm('¿Borrar la fuente y sus artículos?')">
+        <button type="submit">Borrar</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+  <p class="vacio">Sin fuentes todavía.</p>
+{% endif %}
+
+<div class="barra"><div class="wrap">
+  <span class="crece n">Trae los artículos nuevos de todas las fuentes</span>
+  <form method="post" action="/refresh">
+    <button type="submit" class="primary">Cerrar edición</button>
+  </form>
+</div></div>
+{% endblock %}

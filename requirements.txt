@@ -1,0 +1,19 @@
+# Aplicación web (esto es lo que se despliega en Vercel)
+fastapi>=0.115
+jinja2>=3.1
+python-multipart>=0.0.9
+sqlalchemy>=2.0
+psycopg[binary]>=3.2       # Postgres/Neon en producción
+
+# Ingesta y generación de EPUB
+requests>=2.32
+feedparser>=6.0
+trafilatura>=2.1
+lxml>=5.0
+ebooklib>=0.20
+
+# Solo para correr local
+uvicorn>=0.30
+
+# El agente local (agent.py) necesita únicamente `requests` y crosspoint.py.
+# websocket-client solo si algún día usas la vía WebSocket del reader.

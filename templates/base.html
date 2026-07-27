@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>{% block title %}{{ site_name or 'La Gaceta' }}{% endblock %}</title>
+<style>
+:root {
+  --paper: #faf8f4;      /* papel crema, no blanco puro */
+  --ink: #16150f;
+  --ink-soft: #5c584c;
+  --rule: #c9c3b4;
+  --rule-strong: #16150f;
+  --accent: #8c2f1f;     /* rojo de titular */
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia,
+           "Times New Roman", serif;
+  --sans: ui-sans-serif, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14130f;
+    --ink: #ece7db;
+    --ink-soft: #9a9483;
+    --rule: #3a372e;
+    --rule-strong: #6b6558;
+    --accent: #d4785f;
+  }
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--serif); line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 1.25rem; }
+
+/* ---------- cabecera de periódico ---------- */
+.masthead { padding: 1.6rem 0 0; text-align: center; }
+.masthead h1 {
+  margin: 0; font-size: clamp(2.4rem, 9vw, 4.4rem); font-weight: 900;
+  letter-spacing: -.02em; line-height: .95; text-transform: uppercase;
+}
+.masthead h1 a { color: inherit; text-decoration: none; }
+.dateline {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 1rem; flex-wrap: wrap;
+  border-top: 1px solid var(--rule-strong);
+  border-bottom: 1px solid var(--rule-strong);
+  margin-top: .9rem; padding: .35rem 0;
+  font-family: var(--sans); font-size: .68rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+/* doble filete bajo la cabecera, marca de la casa en prensa */
+.rule-double {
+  border-top: 3px double var(--rule-strong); margin-bottom: 1.2rem;
+}
+
+/* ---------- navegación por secciones ---------- */
+.sections {
+  display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap;
+  padding: .55rem 0; font-family: var(--sans);
+  font-size: .72rem; letter-spacing: .11em; text-transform: uppercase;
+}
+.sections a { color: var(--ink-soft); text-decoration: none; white-space: nowrap; }
+.sections a:hover { color: var(--ink); }
+.sections a.on { color: var(--accent); font-weight: 700; }
+.sections .sep { color: var(--rule); }
+
+/* ---------- listado ---------- */
+main { padding-bottom: 7rem; }
+.section-head {
+  display: flex; align-items: baseline; gap: .8rem;
+  margin: 2.2rem 0 .9rem; border-bottom: 2px solid var(--rule-strong);
+  padding-bottom: .3rem;
+}
+.section-head h2 {
+  margin: 0; font-size: 1.05rem; text-transform: uppercase;
+  letter-spacing: .12em; font-family: var(--sans); font-weight: 700;
+}
+.section-head .count { font-family: var(--sans); font-size: .7rem; color: var(--ink-soft); }
+.section-head a {
+  margin-left: auto; font-family: var(--sans); font-size: .68rem;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink-soft); text-decoration: none;
+}
+
+.stories { display: grid; gap: 0; }
+@media (min-width: 860px) {
+  .stories { grid-template-columns: 1fr 1fr; column-gap: 2.2rem; }
+}
+.story {
+  display: flex; gap: .7rem; align-items: flex-start;
+  padding: .95rem 0; border-bottom: 1px solid var(--rule);
+}
+.story.leida { opacity: .5; }
+.story input[type=checkbox] {
+  margin-top: .45rem; width: 1rem; height: 1rem; flex: none; accent-color: var(--accent);
+}
+.story h3 { margin: 0; font-size: 1.22rem; line-height: 1.2; font-weight: 700; }
+.story h3 a { color: inherit; text-decoration: none; }
+.story h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.byline {
+  font-family: var(--sans); font-size: .68rem; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--ink-soft); margin-top: .35rem;
+}
+.marca {
+  border: 1px solid var(--rule); padding: 0 .3rem; margin-left: .35rem;
+  border-radius: 2px; letter-spacing: .06em;
+}
+.marca.env { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- artículo ---------- */
+.pieza { max-width: 40rem; margin: 1.5rem auto 0; }
+.pieza h2 {
+  font-size: clamp(1.8rem, 5vw, 2.7rem); line-height: 1.1; margin: 0 0 .5rem;
+  font-weight: 900; letter-spacing: -.015em;
+}
+.pieza .byline { border-bottom: 1px solid var(--rule); padding-bottom: .8rem; margin-bottom: 1.4rem; }
+.pieza .cuerpo { font-size: 1.09rem; }
+.pieza .cuerpo p { margin: 0 0 1.1rem; text-align: justify; hyphens: auto; }
+.pieza .cuerpo > div > p:first-of-type::first-letter {
+  float: left; font-size: 3.1em; line-height: .82; padding: .05em .09em 0 0;
+  font-weight: 700;
+}
+.pieza .cuerpo h2, .pieza .cuerpo h3 { font-size: 1.25rem; margin: 1.8rem 0 .6rem; }
+.pieza .cuerpo blockquote {
+  margin: 1.2rem 0; padding-left: 1rem; border-left: 3px solid var(--rule);
+  font-style: italic; color: var(--ink-soft);
+}
+.pieza .cuerpo img { max-width: 100%; height: auto; }
+.pieza .cuerpo pre, .pieza .cuerpo code {
+  font-size: .85em; white-space: pre-wrap; word-wrap: break-word;
+}
+.pieza .cuerpo table { max-width: 100%; display: block; overflow-x: auto; }
+
+/* ---------- controles ---------- */
+button, .btn {
+  font-family: var(--sans); font-size: .72rem; letter-spacing: .09em;
+  text-transform: uppercase; padding: .5rem .9rem; cursor: pointer;
+  background: transparent; color: var(--ink); border: 1px solid var(--rule-strong);
+  text-decoration: none; display: inline-block; border-radius: 0;
+}
+button:hover, .btn:hover { background: var(--ink); color: var(--paper); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.primary:hover { filter: brightness(1.12); background: var(--accent); color: #fff; }
+button:disabled { opacity: .35; cursor: not-allowed; }
+button:disabled:hover { background: transparent; color: var(--ink); }
+
+.barra {
+  position: fixed; bottom: 0; left: 0; right: 0; background: var(--paper);
+  border-top: 3px double var(--rule-strong); padding: .7rem 0;
+}
+.barra .wrap { display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; }
+.barra .n {
+  font-family: var(--sans); font-size: .7rem; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.crece { flex: 1; }
+
+.aviso {
+  border-left: 3px solid var(--accent); padding: .6rem .9rem; margin: 1rem 0;
+  font-size: .92rem; background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+.aviso.ok { border-color: #3f7d4e; background: color-mix(in srgb, #3f7d4e 9%, transparent); }
+.vacio { text-align: center; color: var(--ink-soft); padding: 4rem 1rem; font-style: italic; }
+
+input[type=text], input[type=password] {
+  font-family: var(--serif); font-size: 1rem; padding: .5rem .6rem;
+  border: 1px solid var(--rule-strong); background: transparent; color: var(--ink);
+  border-radius: 0;
+}
+table.fuentes { width: 100%; border-collapse: collapse; }
+table.fuentes td, table.fuentes th {
+  padding: .7rem .5rem; border-bottom: 1px solid var(--rule);
+  text-align: left; vertical-align: top;
+}
+table.fuentes th {
+  font-family: var(--sans); font-size: .68rem; letter-spacing: .1em;
+  text-transform: uppercase; border-bottom: 2px solid var(--rule-strong);
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <h1><a href="/">{{ site_name or 'La Gaceta' }}</a></h1>
+    <div class="dateline">
+      <span>{{ fecha or '' }}</span>
+      <span>{% block edicion %}{% endblock %}</span>
+    </div>
+    {% block secciones %}{% endblock %}
+  </header>
+  <div class="rule-double"></div>
+  <main>{% block content %}{% endblock %}</main>
+</div>
+{% block foot %}{% endblock %}
+</body>
+</html>

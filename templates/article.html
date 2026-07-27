@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ a.title }}{% endblock %}
+
+{% block edicion %}{{ a.source }}{% endblock %}
+
+{% block secciones %}
+<nav class="sections">
+  <a href="/">‹ Volver a la portada</a>
+  {% if a.url %}
+    <span class="sep">|</span>
+    <a href="{{ a.url }}" target="_blank" rel="noopener">Ver original</a>
+  {% endif %}
+</nav>
+{% endblock %}
+
+{% block content %}
+<article class="pieza">
+  <h2>{{ a.title }}</h2>
+  <div class="byline">
+    {{ a.source }}
+    {%- if a.published %} · {{ a.published.strftime('%d.%m.%Y') }}{% endif %}
+    {%- if a.chars %} · {{ (a.chars / 1100) | round | int }} min de lectura{% endif %}
+    {%- if a.sent_at %}<span class="marca env">ya enviado</span>{% endif %}
+  </div>
+  <div class="cuerpo">{{ a.html | safe }}</div>
+</article>
+
+<div class="barra"><div class="wrap">
+  <form method="post" action="/article/{{ a.id }}/unread">
+    <button type="submit">Marcar sin leer</button>
+  </form>
+  <span class="crece"></span>
+  <form method="post" action="/queue">
+    <input type="hidden" name="ids" value="{{ a.id }}"/>
+    <button type="submit">Apartar</button>
+  </form>
+  <form method="post" action="/send">
+    <input type="hidden" name="ids" value="{{ a.id }}"/>
+    <button type="submit" class="primary">Enviar al e-reader</button>
+  </form>
+</div></div>
+{% endblock %}

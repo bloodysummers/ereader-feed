@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ site_name }}{% endblock %}
+
+{% block edicion %}
+  {{ total }} artículo{{ '' if total == 1 else 's' }} ·
+  {{ 'Edición completa' if status == 'all' else
+     'Sin leer' if status == 'unread' else
+     'Sin enviar' if status == 'unsent' else 'Apartados' }}
+{% endblock %}
+
+{% block secciones %}
+<nav class="sections">
+  {% for key, label in [('unread','Sin leer'), ('unsent','Sin enviar'),
+                        ('queued','Apartados'), ('all','Todo')] %}
+    <a href="/?status={{ key }}" class="{{ 'on' if status == key and not feed_id }}">
+      {{ label }} ({{ counts[key] }})
+    </a>
+  {% endfor %}
+  <span class="sep">|</span>
+  {% for f in feeds %}
+    <a href="/?status={{ status }}&feed={{ f.id }}" class="{{ 'on' if feed_id == f.id }}">
+      {{ f.title or f.url }}
+    </a>
+  {% endfor %}
+  <span class="sep">|</span>
+  <a href="/feeds">Administrar</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+{% set ok = request.query_params.get('ok') %}
+{% set err = request.query_params.get('error') %}
+{% if ok %}
+  <div class="aviso ok">
+    {% if ok == 'enviado' %}Enviado al e-reader.
+    {% elif ok == 'encolado' %}Apartado para el envío. El agente local lo subirá en su próxima vuelta.
+    {% elif ok.startswith('nuevos-') %}Cierre de edición: {{ ok.split('-')[1] }} artículos nuevos.
+    {% else %}Listo.{% endif %}
+  </div>
+{% endif %}
+{% if err %}
+  <div class="aviso">
+    {% if err == 'vacio' %}No seleccionaste ningún artículo.
+    {% elif err == 'envio' %}Falló el envío. ¿El reader está encendido y en la red?
+    {% else %}Algo salió mal.{% endif %}
+  </div>
+{% endif %}
+
+{% if status == 'queued' and counts['queued'] %}
+  <form method="post" action="/send-queued" style="margin-bottom:1rem">
+    <button type="submit" class="primary">
+      Enviar los {{ counts['queued'] }} apartados al e-reader
+    </button>
+  </form>
+{% endif %}
+
+{% if not secciones %}
+  <p class="vacio">
+    {% if not feeds %}Aún no hay fuentes. Empieza en <a href="/feeds">Administrar</a>.
+    {% else %}Sin material en esta sección.{% endif %}
+  </p>
+{% else %}
+<form method="post" id="f">
+  <input type="hidden" name="status" value="{{ status }}"/>
+
+  {% for s in secciones %}
+    <div class="section-head">
+      <h2>{{ s.nombre }}</h2>
+      <span class="count">{{ s.articulos | length }}</span>
+      {% if not feed_id %}
+        <a href="/?status={{ status }}&feed={{ s.feed_id }}">Ver sección ›</a>
+      {% endif %}
+    </div>
+    <div class="stories">
+      {% for a in s.articulos %}
+        <div class="story {{ 'leida' if a.read_at }}">
+          <input type="checkbox" name="ids" value="{{ a.id }}" onchange="upd()"/>
+          <div>
+            <h3><a href="/article/{{ a.id }}">{{ a.title }}</a></h3>
+            <div class="byline">
+              {%- if a.published %}{{ a.published.strftime('%d.%m.%Y') }}{% else %}s/f{% endif %}
+              {%- if a.chars %} · {{ (a.chars / 1100) | round | int }} min de lectura{% endif %}
+              {%- if a.queued %}<span class="marca">apartado</span>{% endif %}
+              {%- if a.sent_at %}<span class="marca env">enviado</span>{% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
+  <div class="barra"><div class="wrap">
+    <label class="n"><input type="checkbox" onchange="all(this)"/> Todos</label>
+    <span class="crece n" id="n">Nada seleccionado</span>
+    <button type="submit" formaction="/queue" id="q" disabled>Apartar</button>
+    <button type="submit" formaction="/send" class="primary" id="s" disabled>
+      Enviar al e-reader
+    </button>
+  </div></div>
+</form>
+
+<script>
+function boxes() { return [...document.querySelectorAll('input[name=ids]')]; }
+function upd() {
+  const n = boxes().filter(b => b.checked).length;
+  document.getElementById('n').textContent =
+    n === 0 ? 'Nada seleccionado' : n + (n === 1 ? ' seleccionado' : ' seleccionados');
+  document.getElementById('s').disabled = n === 0;
+  document.getElementById('q').disabled = n === 0;
+}
+function all(m) { boxes().forEach(b => b.checked = m.checked); upd(); }
+</script>
+{% endif %}
+{% endblock %}

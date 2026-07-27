@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+out/
+feed.db
+state.json
+.venv/
+.vercel
+.env
+.env.local

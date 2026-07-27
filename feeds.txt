@@ -1,0 +1,23 @@
+# Fuentes del digest. Una por línea; las líneas con # se ignoran.
+#
+# Formatos aceptados (todos equivalentes a una URL de feed):
+#
+#   astralcodexten              handle de Substack -> astralcodexten.substack.com/feed
+#   substack:astralcodexten     igual, explícito
+#   noahpinion.blog             dominio propio -> busca su feed
+#   https://sitio.com/rss.xml   URL directa, se usa tal cual
+#
+# No lo edites a mano si no quieres: usa la herramienta, que valida antes
+# de agregar y te dice si el feed trae texto completo o solo resumen:
+#
+#   python3 feeds.py add astralcodexten noahpinion.blog
+#   python3 feeds.py check        # revalida todo lo de aquí
+#
+# Ojo con los feeds abandonados: algunos existen pero hoy sirven contenido
+# de otro sitio. `check` muestra a qué dominio apuntan los artículos.
+
+# Progressive International
+# Su RSS solo publica las URLs en inglés (/en), pero muchos artículos tienen
+# traducción en /es. Con "| lang=es" se busca esa versión por artículo y se
+# usa su título y su texto en español; si no existe, se queda el inglés.
+https://progressive.international/rss.xml | lang=es

@@ -1,0 +1,8 @@
+out/
+feed.db
+state.json
+__pycache__/
+*.pyc
+.venv/
+socket-feed.py
+agent.py

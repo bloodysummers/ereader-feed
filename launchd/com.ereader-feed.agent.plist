@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Agente local del feed: revisa cada 5 minutos si hay un envío pendiente y,
+  si lo hay, baja el EPUB y lo sube al e-reader.
+
+  No es un proceso permanente: launchd lo arranca, hace una pasada de un par
+  de segundos y termina. Si la Mac está dormida, la pasada ocurre al despertar.
+
+  Instalar:
+      cp launchd/com.ereader-feed.agent.plist ~/Library/LaunchAgents/
+      # edita FEED_URL y APP_TOKEN dentro del archivo copiado
+      chmod 600 ~/Library/LaunchAgents/com.ereader-feed.agent.plist
+      launchctl load ~/Library/LaunchAgents/com.ereader-feed.agent.plist
+
+  Ver qué hizo:
+      tail -f /tmp/ereader-feed-agent.log
+
+  Desinstalar:
+      launchctl unload ~/Library/LaunchAgents/com.ereader-feed.agent.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.ereader-feed.agent</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Library/Frameworks/Python.framework/Versions/3.13/bin/python3</string>
+    <string>/Users/ldiaz/Documents/GitHub/ereader-feed/agent.py</string>
+    <string>--once</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/ldiaz/Documents/GitHub/ereader-feed</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>FEED_URL</key>
+    <string>https://CAMBIAME.vercel.app</string>
+    <key>APP_TOKEN</key>
+    <string>CAMBIAME</string>
+    <key>CROSSPOINT_HOST</key>
+    <string>crosspoint.local</string>
+  </dict>
+
+  <!-- Cada 5 minutos. Un envío apartado llega al reader en ese plazo. -->
+  <key>StartInterval</key>
+  <integer>300</integer>
+
+  <!-- También al iniciar sesión, para recoger lo que quedó pendiente. -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/ereader-feed-agent.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/ereader-feed-agent.log</string>
+</dict>
+</plist>
