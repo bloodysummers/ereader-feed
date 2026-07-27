@@ -7,9 +7,10 @@ Variables de entorno:
     DATABASE_URL   Postgres de Neon en producción; sin ella usa SQLite local.
     APP_TOKEN      Token compartido. Si no se define, la app queda abierta:
                    NUNCA la despliegues en Vercel sin definirlo.
-    SEND_MODE      'direct' sube al reader desde el propio proceso (local);
-                   'queue' deja el envío para el agente local (nube).
-                   Por omisión: direct en local, queue en Vercel.
+    SEND_MODE      'opds'   el reader descarga del catálogo por su cuenta;
+                   'direct' este proceso sube al reader (solo en tu red);
+                   'queue'  deja el envío para agent.py.
+                   Por omisión: opds en Vercel, direct en local.
     CROSSPOINT_HOST  nombre mDNS del reader (solo en modo direct).
 """
 
@@ -32,7 +33,11 @@ from db import init_db
 HERE = os.path.dirname(os.path.abspath(__file__))
 APP_TOKEN = os.environ.get("APP_TOKEN", "").strip()
 ON_VERCEL = bool(os.environ.get("VERCEL"))
-SEND_MODE = os.environ.get("SEND_MODE", "queue" if ON_VERCEL else "direct")
+# Cómo llega el EPUB al reader:
+#   opds    el reader lo descarga solo del catálogo (no hace falta agente)
+#   queue   se deja un trabajo para que agent.py lo suba desde la LAN
+#   direct  este mismo proceso lo sube (solo sirve corriendo en tu red)
+SEND_MODE = os.environ.get("SEND_MODE", "opds" if ON_VERCEL else "direct")
 SITE_NAME = os.environ.get("SITE_NAME", "La Gaceta")
 
 templates = Jinja2Templates(directory=os.path.join(HERE, "templates"))
@@ -262,7 +267,7 @@ def read_article(request: Request, article_id: int):
         store.mark_read(article_id)  # solo este, nunca el lote
         article = store.get_article(article_id)
     return templates.TemplateResponse(request, "article.html", {
-        "a": article, **cabecera(),
+        "a": article, "send_mode": SEND_MODE, **cabecera(),
     })
 
 
@@ -274,8 +279,11 @@ def unread(article_id: int):
 
 @app.post("/queue")
 def queue(ids: list[int] = Form(default=[]), status: str = Form(default="unread")):
+    if not ids:
+        return RedirectResponse(f"/?status={status}&error=vacio", status_code=303)
     store.set_queued(ids, True)
-    return RedirectResponse(f"/?status={status}", status_code=303)
+    aviso = "apartado" if SEND_MODE == "opds" else "encolado"
+    return RedirectResponse(f"/?status={status}&ok={aviso}", status_code=303)
 
 
 @app.post("/send")

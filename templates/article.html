@@ -32,11 +32,15 @@
   <span class="crece"></span>
   <form method="post" action="/queue">
     <input type="hidden" name="ids" value="{{ a.id }}"/>
-    <button type="submit">Apartar</button>
+    <button type="submit" class="{{ 'primary' if send_mode == 'opds' }}">
+      {{ 'Apartar para el e-reader' if send_mode == 'opds' else 'Apartar' }}
+    </button>
   </form>
-  <form method="post" action="/send">
-    <input type="hidden" name="ids" value="{{ a.id }}"/>
-    <button type="submit" class="primary">Enviar al e-reader</button>
-  </form>
+  {% if send_mode != 'opds' %}
+    <form method="post" action="/send">
+      <input type="hidden" name="ids" value="{{ a.id }}"/>
+      <button type="submit" class="primary">Enviar al e-reader</button>
+    </form>
+  {% endif %}
 </div></div>
 {% endblock %}

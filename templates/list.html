@@ -27,12 +27,20 @@
 </nav>
 {% endblock %}
 
+{% macro boton_actualizar(texto='Actualizar fuentes') %}
+<form method="post" action="/refresh" style="display:inline">
+  <input type="hidden" name="status" value="{{ status }}"/>
+  <button type="submit" class="primary">{{ texto }}</button>
+</form>
+{% endmacro %}
+
 {% block content %}
 {% set ok = request.query_params.get('ok') %}
 {% set err = request.query_params.get('error') %}
 {% if ok %}
   <div class="aviso ok">
     {% if ok == 'enviado' %}Enviado al e-reader.
+    {% elif ok == 'apartado' %}Listo. Ábrelo en el reader: catálogo OPDS, sección «Apartados».
     {% elif ok == 'encolado' %}Apartado para el envío. El agente local lo subirá en su próxima vuelta.
     {% elif ok.startswith('nuevos-') %}Cierre de edición: {{ ok.split('-')[1] }} artículos nuevos.
     {% else %}Listo.{% endif %}
@@ -47,18 +55,30 @@
 {% endif %}
 
 {% if status == 'queued' and counts['queued'] %}
-  <form method="post" action="/send-queued" style="margin-bottom:1rem">
-    <button type="submit" class="primary">
-      Enviar los {{ counts['queued'] }} apartados al e-reader
-    </button>
-  </form>
+  {% if send_mode == 'opds' %}
+    <div class="aviso ok" style="margin-bottom:1rem">
+      Estos {{ counts['queued'] }} están listos. En el reader, abre el catálogo
+      OPDS y entra a <strong>Apartados</strong>: los bajas en un solo volumen.
+      Al descargarlo salen de aquí.
+    </div>
+  {% else %}
+    <form method="post" action="/send-queued" style="margin-bottom:1rem">
+      <button type="submit" class="primary">
+        Enviar los {{ counts['queued'] }} apartados al e-reader
+      </button>
+    </form>
+  {% endif %}
 {% endif %}
 
 {% if not secciones %}
-  <p class="vacio">
-    {% if not feeds %}Aún no hay fuentes. Empieza en <a href="/feeds">Administrar</a>.
-    {% else %}Sin material en esta sección.{% endif %}
-  </p>
+  <div class="vacio">
+    {% if not feeds %}
+      <p>Aún no hay fuentes. Empieza en <a href="/feeds">Administrar</a>.</p>
+    {% else %}
+      <p>Sin material en esta sección.</p>
+      <p style="margin-top:1.2rem">{{ boton_actualizar('Traer artículos ahora') }}</p>
+    {% endif %}
+  </div>
 {% else %}
 <form method="post" id="f">
   <input type="hidden" name="status" value="{{ status }}"/>
@@ -92,10 +112,18 @@
   <div class="barra"><div class="wrap">
     <label class="n"><input type="checkbox" onchange="all(this)"/> Todos</label>
     <span class="crece n" id="n">Nada seleccionado</span>
-    <button type="submit" formaction="/queue" id="q" disabled>Apartar</button>
-    <button type="submit" formaction="/send" class="primary" id="s" disabled>
-      Enviar al e-reader
-    </button>
+    <button type="submit" formaction="/refresh" formnovalidate>Actualizar</button>
+    {% if send_mode == 'opds' %}
+      {# El reader descarga solo: apartar es lo único que hace falta. #}
+      <button type="submit" formaction="/queue" class="primary" id="q" disabled>
+        Apartar para el e-reader
+      </button>
+    {% else %}
+      <button type="submit" formaction="/queue" id="q" disabled>Apartar</button>
+      <button type="submit" formaction="/send" class="primary" id="s" disabled>
+        Enviar al e-reader
+      </button>
+    {% endif %}
   </div></div>
 </form>
 
@@ -105,8 +133,10 @@ function upd() {
   const n = boxes().filter(b => b.checked).length;
   document.getElementById('n').textContent =
     n === 0 ? 'Nada seleccionado' : n + (n === 1 ? ' seleccionado' : ' seleccionados');
-  document.getElementById('s').disabled = n === 0;
-  document.getElementById('q').disabled = n === 0;
+  for (const id of ['s', 'q']) {
+    const b = document.getElementById(id);
+    if (b) b.disabled = n === 0;   // en modo opds no existe el de enviar
+  }
 }
 function all(m) { boxes().forEach(b => b.checked = m.checked); upd(); }
 </script>
