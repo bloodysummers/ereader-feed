@@ -322,13 +322,39 @@ def feeds_page(request: Request):
 
 
 @app.post("/feeds/add")
-def feeds_add(target: str = Form(...), lang: str = Form(default="")):
+def feeds_add(target: str = Form(...), lang: str = Form(default=""),
+              force: str = Form(default="")):
+    """Alta de fuente. Si la validación falla, explica por qué.
+
+    `force` permite guardarla igualmente: útil cuando el sitio bloquea las IPs
+    de datacenter y la validación falla desde la nube aunque el feed sea válido.
+    """
+    import urllib.parse
+
     import feeds as feedtools
 
-    url, report = feedtools.discover(target.strip())
+    target = target.strip()
+    url, outcome = feedtools.discover(target)
+
     if not url:
-        return RedirectResponse("/feeds?error=nofeed", status_code=303)
-    store.add_feed(url, title=report.get("title"), lang=lang.strip() or None)
+        if force:
+            store.add_feed(feedtools.resolve_feed_url(target),
+                           lang=lang.strip() or None)
+            return RedirectResponse("/feeds?ok=forzada", status_code=303)
+        # `outcome` es la lista de intentos; el primero es la URL más probable.
+        detalle = "no encontré un feed usable"
+        if outcome:
+            primero = outcome[0]
+            detalle = primero.get("error") or (
+                f"responde, pero {primero.get('items', 0)} artículos"
+                + (f" · {primero['mismatch']}" if primero.get("mismatch") else "")
+            )
+        return RedirectResponse(
+            "/feeds?error=" + urllib.parse.quote(str(detalle)[:200]),
+            status_code=303,
+        )
+
+    store.add_feed(url, title=outcome.get("title"), lang=lang.strip() or None)
     return RedirectResponse("/feeds?ok=1", status_code=303)
 
 

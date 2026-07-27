@@ -8,11 +8,23 @@
 {% endblock %}
 
 {% block content %}
-{% if request.query_params.get('error') == 'nofeed' %}
-  <div class="aviso">No encontré un feed usable en eso.</div>
+{% set err = request.query_params.get('error') %}
+{% if err %}
+  <div class="aviso">
+    <strong>No pude validar esa fuente.</strong><br/>
+    {{ 'No encontré un feed usable en eso.' if err == 'nofeed' else err }}
+    <br/><br/>
+    Si sabes que el feed es válido, marca <em>agregar sin validar</em> y
+    reinténtalo: algunos sitios rechazan las peticiones desde la nube aunque
+    respondan bien desde tu red.
+  </div>
 {% endif %}
 {% if request.query_params.get('ok') %}
-  <div class="aviso ok">Fuente agregada.</div>
+  <div class="aviso ok">
+    {% if request.query_params.get('ok') == 'forzada' %}
+      Fuente agregada sin validar. Revisa la columna de errores tras actualizar.
+    {% else %}Fuente agregada.{% endif %}
+  </div>
 {% endif %}
 
 <div class="section-head"><h2>Agregar fuente</h2></div>
@@ -21,6 +33,10 @@
   <input type="text" name="target" required style="flex:1;min-width:16rem"
          placeholder="astralcodexten, sitio.com o URL del feed"/>
   <input type="text" name="lang" style="width:8rem" placeholder="idioma (es)"/>
+  <label class="byline" style="text-transform:none;letter-spacing:0;display:flex;
+         align-items:center;gap:.35rem">
+    <input type="checkbox" name="force" value="1"/> agregar sin validar
+  </label>
   <button type="submit" class="primary">Agregar</button>
 </form>
 <p class="byline" style="margin-top:.7rem;text-transform:none;letter-spacing:0;font-size:.85rem">
