@@ -323,22 +323,26 @@ def feeds_page(request: Request):
 
 @app.post("/feeds/add")
 def feeds_add(target: str = Form(...), lang: str = Form(default=""),
-              force: str = Form(default="")):
+              force: str = Form(default=""), title: str = Form(default="")):
     """Alta de fuente. Si la validación falla, explica por qué.
 
     `force` permite guardarla igualmente: útil cuando el sitio bloquea las IPs
     de datacenter y la validación falla desde la nube aunque el feed sea válido.
+    En ese caso no hay título que descubrir, así que se usa el que escribas.
+
+    Reenviar la misma URL con un título distinto sirve para renombrarla.
     """
     import urllib.parse
 
     import feeds as feedtools
 
     target = target.strip()
+    title = title.strip() or None
     url, outcome = feedtools.discover(target)
 
     if not url:
         if force:
-            store.add_feed(feedtools.resolve_feed_url(target),
+            store.add_feed(feedtools.resolve_feed_url(target), title=title,
                            lang=lang.strip() or None)
             return RedirectResponse("/feeds?ok=forzada", status_code=303)
         # `outcome` es la lista de intentos; el primero es la URL más probable.
@@ -354,7 +358,9 @@ def feeds_add(target: str = Form(...), lang: str = Form(default=""),
             status_code=303,
         )
 
-    store.add_feed(url, title=outcome.get("title"), lang=lang.strip() or None)
+    # El título escrito a mano gana sobre el que anuncia el feed.
+    store.add_feed(url, title=title or outcome.get("title"),
+                   lang=lang.strip() or None)
     return RedirectResponse("/feeds?ok=1", status_code=303)
 
 

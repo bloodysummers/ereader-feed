@@ -58,7 +58,8 @@ def add_feed(url, title=None, lang=None, position=None):
             conn.execute(
                 update(feeds)
                 .where(feeds.c.id == existing.id)
-                .values(title=title or existing.title, lang=lang)
+                .values(title=title or existing.title,
+                        lang=lang if lang is not None else existing.lang)
             )
             return existing.id
         if position is None:

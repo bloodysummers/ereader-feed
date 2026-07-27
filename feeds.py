@@ -21,7 +21,7 @@ import feedparser
 import requests
 
 from sources import (FULL_TEXT_THRESHOLD, HTTP_TIMEOUT, USER_AGENT,
-                     parse_feed_line, resolve_feed_url)
+                     http_error_detail, parse_feed_line, resolve_feed_url)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FEEDS_FILE = os.path.join(HERE, "feeds.txt")
@@ -80,7 +80,8 @@ def inspect_feed(feed_url, origin=None):
     }
     try:
         response = _get(feed_url)
-        response.raise_for_status()
+        if response.status_code != 200:
+            raise RuntimeError(http_error_detail(response))
         parsed = feedparser.parse(response.content)
     except Exception as exc:
         result["error"] = str(exc)

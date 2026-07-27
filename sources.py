@@ -217,6 +217,21 @@ def clean_html(raw, strip_images=True):
     return etree.tostring(frag, method="xml", encoding="unicode")
 
 
+def http_error_detail(response):
+    """Describe un fallo HTTP con los datos que sirven para reportarlo.
+
+    Cuando un sitio detrás de Cloudflare bloquea la petición, el `cf-ray`
+    identifica el evento en su panel de seguridad: es lo único con lo que su
+    administrador puede encontrar por qué nos rechazó.
+    """
+    bits = [f"HTTP {response.status_code}"]
+    for header in ("server", "cf-ray", "cf-mitigated"):
+        value = response.headers.get(header)
+        if value:
+            bits.append(f"{header}={value}")
+    return " · ".join(bits)
+
+
 def _entry_html(entry):
     """Saca el HTML más completo que ofrezca la entrada del feed."""
     if entry.get("content"):
@@ -237,7 +252,8 @@ def fetch_feed(url, since_days=2, max_items=10, strip_images=True, seen=(), pref
     response = requests.get(
         url, headers={"User-Agent": USER_AGENT}, timeout=HTTP_TIMEOUT
     )
-    response.raise_for_status()
+    if response.status_code != 200:
+        raise RuntimeError(http_error_detail(response))
     parsed = feedparser.parse(response.content)
     if parsed.bozo and not parsed.entries:
         raise RuntimeError(f"feed ilegible: {parsed.get('bozo_exception', 'desconocido')}")
